@@ -1,144 +1,97 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-let data = [
-    {category: "Sporting Goods", price: "$49.99", stocked: true, name: "Football"},
-    {category: "Sporting Goods", price: "$9.99", stocked: true, name: "Baseball"},
-    {category: "Sporting Goods", price: "$29.99", stocked: false, name: "Basketball"},
-    {category: "Electronics", price: "$99.99", stocked: true, name: "iPod Touch"},
-    {category: "Electronics", price: "$399.99", stocked: false, name: "iPhone 5"},
-    {category: "Electronics", price: "$199.99", stocked: true, name: "Nexus 7"}
-  ];
+import './index.css';
 
-  class ProductCategoryRow extends React.Component {
-    render () {
-        let category = this.props.category;
-        return (
-            <tr>
-                <th> {category} </th>
-            </tr>
-        )
-    }
-  }
-
-  class ProductRow extends React.Component {
-
-    render () {
-        let name = this.props.products.stocked ? this.props.products.name : <span style={{color:'crimson'}}>{this.props.products.name}</span>
-        return (
-            <tr>
-                <td> {name} </td>
-                <td> {this.props.products.price} </td>
-            </tr>
-        )
-    }
-  }
-
-  class ProductTable extends React.Component {
-    render () {
-        let rows = [];
-        let lastCat = null;
-        let filter = this.props.filter;
-        let stockOnly = this.props.stockOnly;
-        
-        this.props.products.forEach( product => {
-            if(product.name.indexOf(filter) === -1) return;
-            if(!product.stocked && stockOnly) return;
-            if (product.category !== lastCat) {
-                rows.push (
-                    <ProductCategoryRow category = {product.category} key = {product.category} /> 
-                )
-                lastCat = product.category;
-            }
-            rows.push (
-                <ProductRow products = {product} key = {product.name} />
-            )
-        })
-
-        return (
-            <table>
-                <thead>
-                    <tr>
-                        <th> Name </th>
-                        <th> Price </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-                
-            </table>
-        )
-    }
-  }
-
-  class SearchBar extends React.Component {
+class Application extends React.Component {
     constructor (props) {
         super (props);
-        this.handleFilter = this.handleFilter.bind(this);
-        this.handleStock = this.handleStock.bind(this);
+
+        this.postBtnClicked = this.postBtnClicked.bind(this);
+    }
+    postBtnClicked (e) {
+        e.preventDefault();
+        this.props.updatePosts (e.target);
+    }
+    render () {
+        return (
+            <form className='blogForm' onSubmit={this.postBtnClicked}>
+                <label htmlFor="title">Blog Title</label>
+                <input type="text" id="title" />
+                <label htmlFor="body">Body</label>
+                <input type="text" id="body" />
+                <button> Post </button>
+            </form>
+        )
+    }
+}
+
+class Overview extends React.Component {
+    constructor (props) {
+        super (props);
+        this.deleteBtn = this.deleteBtn.bind(this);
     }
 
-    handleFilter (e) {
-        this.props.onFilterChange (e.target.value);
-    }
-
-    handleStock (e) {
-        this.props.onStockChange (e.target.checked);
+    deleteBtn (e) {
+        this.props.deleteBtn (e.target);
     }
 
     render () {
+        let posts = [];
+        this.props.posts.forEach (post => {
+            posts.push(
+                <div key={post.id}>
+                    <div className='postTitle'>{post.title}</div>
+                    <div className='postBody'>{post.body}</div>
+                    <button id={post.id} onClick={this.deleteBtn}> Delete </button>
+                </div>
+            )
+        });
+        
         return (
-            <form>
-                <input type="text" placeholder="search" value={this.props.filter}
-                onChange = {this.handleFilter} />
-                <input type="checkbox" checked={this.props.stockOnly}
-                onChange = {this.handleStock} />
-                <span>Only show products in stock</span>
-            </form>   
+            <div>
+                {posts}
+            </div>
         )
     }
-  }
+}
 
-  export default class FilterableTable extends React.Component {
+class Main extends React.Component {
+
     constructor (props) {
         super (props);
         this.state = {
-            filter : 'ball',
-            stockOnly: false
-        }   
-        this.handleFilter = this.handleFilter.bind (this);
-        this.handleStock = this.handleStock.bind (this);
+            posts: this.props.data
+        }
+        this.updatePosts = this.updatePosts.bind(this);
+        this.deleteBtn = this.deleteBtn.bind(this);
+    }
+    updatePosts (result) {
+        this.setState({
+            posts: this.state.posts.concat({title: result[0].value, body: result[1].value, id:(this.state.posts.length + 1)})
+        })
     }
 
-    handleFilter (text) {
-        this.setState ({
-            filter: text
-        });
+    deleteBtn (obj) {
+        this.setState({
+            posts: this.state.posts.filter(post => post.id != obj.id)
+        })
     }
 
-    handleStock (isChecked) {
-        this.setState ({
-            stockOnly: isChecked
-        });
-    }
     render () {
         return (
             <div>
-                <SearchBar 
-                filter = {this.state.filter} 
-                stockOnly = {this.state.stockOnly}
-                onFilterChange = {this.handleFilter}
-                onStockChange = {this.handleStock} />
-                <ProductTable 
-                products = {this.props.products} 
-                filter = {this.state.filter} 
-                stockOnly = {this.state.stockOnly} />
-            </div>   
+                <Application updatePosts = {this.updatePosts} />
+                <Overview posts = {this.state.posts} deleteBtn = {this.deleteBtn} />
+            </div>
         )
     }
-  }
+}
 
-  const root = ReactDOM.createRoot (document.getElementById('table'));
-  root.render(<FilterableTable products = {data}/>);
-// root.render(<div>Hello</div>);
-// reportWebVitals();
+let data = [
+    {title: "first blog", body: "blog about ONE", id: 1},
+    {title: "second blog here", body: "blog about, wait for it, TWO", id:2}
+]
+
+const root = ReactDOM.createRoot (document.getElementById('list'));
+root.render(<Main data = {data} />);
+
