@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
+import {BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
 import './index.css';
 
 class Application extends React.Component {
@@ -40,7 +41,7 @@ class Overview extends React.Component {
         this.props.posts.forEach (post => {
             posts.push(
                 <div key={post.id}>
-                    <div className='postTitle'>{post.title}</div>
+                    <Link to={"/posts/"+post.id} className='postTitle'>{post.title}</Link>
                     <div className='postBody'>{post.body}</div>
                     <button id={post.id} onClick={this.deleteBtn}> Delete </button>
                 </div>
@@ -55,19 +56,65 @@ class Overview extends React.Component {
     }
 }
 
+class Navigation extends React.Component {
+    render () {
+        return (
+            <div>
+                <Link to="/app"> Application </Link> |
+                <Link to="/posts"> Overview </Link>
+            </div>
+        )
+    }
+}
+
+class PostDetails extends React.Component {
+    render () {
+        return (
+            <div>
+                <h1>{this.props.data.title}</h1>
+                <h5>{this.props.data.body}</h5>
+            </div>
+        )
+    }
+}
+
 class Main extends React.Component {
 
     constructor (props) {
         super (props);
         this.state = {
-            posts: this.props.data
+            posts: this.props.data,
+            postRoutes: []
         }
         this.updatePosts = this.updatePosts.bind(this);
         this.deleteBtn = this.deleteBtn.bind(this);
     }
     updatePosts (result) {
         this.setState({
-            posts: this.state.posts.concat({title: result[0].value, body: result[1].value, id:(this.state.posts.length + 1)})
+            posts: this.state.posts.concat(
+                {   title: result[0].value, 
+                    body: result[1].value, 
+                    id:this.state.posts.length  }
+                )
+        }, () => {
+            result.reset();
+            this.renderRoutes();
+        })
+    }
+
+    componentDidMount () {
+        this.renderRoutes();
+    }
+
+    renderRoutes () {
+        this.postDetails = [];
+        this.state.posts.forEach (post => {
+            this.postDetails.push(
+              <Route path={"posts/" + post.id} element={<PostDetails data={post}/>} key={post.id}/>  
+            )
+        })
+        this.setState({
+            postRoutes: this.postDetails
         })
     }
 
@@ -79,17 +126,22 @@ class Main extends React.Component {
 
     render () {
         return (
-            <div>
-                <Application updatePosts = {this.updatePosts} />
-                <Overview posts = {this.state.posts} deleteBtn = {this.deleteBtn} />
-            </div>
+            <Router>
+                <Navigation />
+                <Routes>
+                    <Route path='/app' element={<Application updatePosts = {this.updatePosts} />}/>
+                    <Route path='/posts' element={<Overview posts = {this.state.posts} deleteBtn = {this.deleteBtn} />}/>
+                    {this.state.postRoutes}
+                </Routes>
+            </Router>
+            
         )
     }
 }
 
 let data = [
-    {title: "first blog", body: "blog about ONE", id: 1},
-    {title: "second blog here", body: "blog about, wait for it, TWO", id:2}
+    {title: "first blog", body: "blog about ONE", id: 0},
+    {title: "second blog here", body: "blog about, wait for it, TWO", id:1}
 ]
 
 const root = ReactDOM.createRoot (document.getElementById('list'));
