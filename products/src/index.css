@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: skyblue;
 }
 
 code {
@@ -27,4 +28,9 @@ code {
   margin-left: 15px;
   margin-top: 15px;
   margin-bottom: 15px;
+}
+
+svg {
+  width:100px;
+  color:crimson;
 }
